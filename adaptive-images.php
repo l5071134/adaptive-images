@@ -12,7 +12,8 @@
 
 /* CONFIG ----------------------------------------------------------------------------------------------------------- */
 
-$resolutions   = array(1382, 992, 768, 480); // the resolution break-points to use (screen widths, in pixels)
+$resolutions   = array(1080, 720); // the resolution break-points to use (screen height, in pixels)
+$base_height   = 1080;
 $cache_path    = "ai-cache"; // where to store the generated re-sized images. Specify from your document root!
 $jpg_quality   = 75; // the quality of any generated JPGs on a scale of 0 to 100
 $sharpen       = TRUE; // Shrinking images can blur details, perform a sharpen on re-scaled images?
@@ -131,7 +132,7 @@ function refreshCache($source_file, $cache_file, $resolution) {
 
 /* generates the given cache file for the given source file with the given resolution */
 function generateImage($source_file, $cache_file, $resolution) {
-  global $sharpen, $jpg_quality;
+  global $sharpen, $jpg_quality, $base_height;
 
   $extension = strtolower(pathinfo($source_file, PATHINFO_EXTENSION));
 
@@ -141,14 +142,14 @@ function generateImage($source_file, $cache_file, $resolution) {
   $height       = $dimensions[1];
 
   // Do we need to downscale the image?
-  if ($width <= $resolution) { // no, because the width of the source image is already less than the client width
+  if ($resolution == $base_height) { // no, because the width of the source image is already less than the client width
     return $source_file;
   }
 
   // We need to resize the source image to the width of the resolution breakpoint we're working with
-  $ratio      = $height/$width;
-  $new_width  = $resolution;
-  $new_height = ceil($new_width * $ratio);
+  $ratio      = $resolution/$base_height;
+  $new_width  = ceil($width * $ratio);
+  $new_height = ceil($height * $ratio);
   $dst        = ImageCreateTrueColor($new_width, $new_height); // re-sized image
 
   switch ($extension) {
@@ -207,7 +208,8 @@ function generateImage($source_file, $cache_file, $resolution) {
   // save the new file in the appropriate path, and send a version to the browser
   switch ($extension) {
     case 'png':
-      $gotSaved = ImagePng($dst, $cache_file);
+      //$gotSaved = ImagePng($dst, $cache_file);
+      $gotSaved = ImageJpeg($dst, $cache_file, $jpg_quality);
     break;
     case 'gif':
       $gotSaved = ImageGif($dst, $cache_file);
